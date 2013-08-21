@@ -20,9 +20,9 @@ package sqlite3
 #cgo CFLAGS: -DSQLITE_SOUNDEX=1
 #cgo CFLAGS: -DSQLITE_OMIT_AUTHORIZATION=1
 #cgo CFLAGS: -DSQLITE_OMIT_AUTOINIT=1
-#cgo CFLAGS: -DSQLITE_OMIT_LOAD_EXTENSION=1
 #cgo CFLAGS: -DSQLITE_OMIT_TRACE=1
 #cgo CFLAGS: -DSQLITE_OMIT_UTF16=1
+#cgo LDFLAGS: -ldl
 
 // Fix for BusyTimeout on *nix systems.
 #cgo !windows CFLAGS: -DHAVE_USLEEP=1
@@ -141,6 +141,13 @@ func Open(name string) (*Conn, error) {
 	rc := C.sqlite3_open_v2(cStr(name), &db,
 		C.SQLITE_OPEN_READWRITE|C.SQLITE_OPEN_CREATE, nil)
 	if rc != OK {
+		err := libErr(rc, db)
+		C.sqlite3_close(db)
+		return nil, err
+	}
+
+	// Enable sqlite extension loading
+	if rc := C.sqlite3_enable_load_extension(db, C.int(1)); rc != OK {
 		err := libErr(rc, db)
 		C.sqlite3_close(db)
 		return nil, err
@@ -489,6 +496,19 @@ func (c *Conn) Limit(id, value int) (prev int) {
 		prev = int(C.sqlite3_limit(c.db, C.int(id), C.int(value)))
 	}
 	return
+}
+
+func (c *Conn) LoadExtension(name string) error {
+	if c.db == nil {
+		return ErrBadConn
+	}
+
+	if rc := C.sqlite3_load_extension(c.db, cStr(name), nil, nil); rc != OK {
+		err := libErr(rc, c.db)
+		C.sqlite3_close(c.db)
+		return err
+	}
+	return nil
 }
 
 // exec calls sqlite3_exec on sql, which must be a null-terminated C string.
