@@ -10,7 +10,7 @@ package sqlite3
 // [http://www.sqlite.org/footprint.html]
 #cgo CFLAGS: -Os
 #cgo CFLAGS: -DNDEBUG=1
-#cgo CFLAGS: -DSQLITE_THREADSAFE=2
+#cgo CFLAGS: -DSQLITE_THREADSAFE=1
 #cgo CFLAGS: -DSQLITE_TEMP_STORE=2
 #cgo CFLAGS: -DSQLITE_USE_URI=1
 #cgo CFLAGS: -DSQLITE_ENABLE_FTS3_PARENTHESIS=1
@@ -139,7 +139,7 @@ func Open(name string) (*Conn, error) {
 
 	var db *C.sqlite3
 	rc := C.sqlite3_open_v2(cStr(name), &db,
-		C.SQLITE_OPEN_READWRITE|C.SQLITE_OPEN_CREATE, nil)
+		C.SQLITE_OPEN_READWRITE|C.SQLITE_OPEN_CREATE|C.SQLITE_CONFIG_MULTITHREAD, nil)
 	if rc != OK {
 		err := libErr(rc, db)
 		C.sqlite3_close(db)
