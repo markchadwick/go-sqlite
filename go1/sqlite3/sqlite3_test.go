@@ -19,7 +19,7 @@ import (
 	"time"
 	"unsafe"
 
-	. "code.google.com/p/go-sqlite/go1/sqlite3"
+	. "github.com/markchadwick/go-sqlite"
 )
 
 // skip, when set to true, causes all remaining tests to be skipped.
